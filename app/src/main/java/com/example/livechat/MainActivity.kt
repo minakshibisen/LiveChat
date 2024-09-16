@@ -9,11 +9,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.example.livechat.screens.LoginScreen
+import com.example.livechat.screens.SignUpScreen
 import com.example.livechat.ui.theme.LiveChatTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 sealed class DestinationScreens(var route: String) {
     object SignUp : DestinationScreens("signUp")
@@ -29,7 +32,7 @@ sealed class DestinationScreens(var route: String) {
         fun createRoute(id: String) = "singleStatus/$id"
     }
 }
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,12 +52,16 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ChatAppNavigation() {
         val navController = rememberNavController()
-        NavHost(navController = navController, startDestination = DestinationScreens.SignUp.route ){
-            composable(DestinationScreens.SignUp.route){
-
+        val vm = hiltViewModel<LCViewModel>()
+        NavHost(navController = navController, startDestination = DestinationScreens.SignUp.route) {
+            composable(DestinationScreens.SignUp.route) {
+                SignUpScreen(navController,vm)
+            }
+            composable(DestinationScreens.Login.route) {
+                LoginScreen()
             }
         }
-        LoginScreen()
+
 
     }
 

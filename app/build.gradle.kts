@@ -1,6 +1,9 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.gms.google.services)
+
 }
 
 android {
@@ -61,6 +64,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.com.google.dagger.hilt.android.gradle.plugin)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.firebase.auth)
+    implementation(libs.hilt.android.gradle.plugin)
     /*    implementation(libs.hilt.compiler)
         implementation(libs.hilt.android.testing)*/
     testImplementation(libs.junit)
@@ -72,6 +77,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("com.google.dagger:hilt-android:2.51.1")
    // implementation("androidx.navigation:navigation-compose:$nav_version")
+    implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation( "androidx.hilt:hilt-navigation-compose:1.0.0")
+
 
 
 }
