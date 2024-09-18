@@ -1,9 +1,9 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
-
+    id("kotlin-kapt") // Required for annotation processing
+    id("dagger.hilt.android.plugin") // Apply the Hilt plugin
 }
 
 android {
@@ -53,7 +53,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -62,12 +61,26 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.com.google.dagger.hilt.android.gradle.plugin)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.auth)
-    implementation(libs.hilt.android.gradle.plugin)
-    /*    implementation(libs.hilt.compiler)
-        implementation(libs.hilt.android.testing)*/
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+
+    implementation("androidx.navigation:navigation-compose:2.6.0")
+
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    implementation(libs.firebase.firestore)
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+
+    // Hilt navigation for Compose
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+
+    // AndroidX Lifecycle (ViewModel and Compose)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+
+    // Testing dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -75,13 +88,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("com.google.dagger:hilt-android:2.51.1")
-   // implementation("androidx.navigation:navigation-compose:$nav_version")
-    implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
-
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation( "androidx.hilt:hilt-navigation-compose:1.0.0")
-
-
-
 }
