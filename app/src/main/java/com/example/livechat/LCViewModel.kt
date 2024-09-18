@@ -1,5 +1,6 @@
 package com.example.livechat
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -8,13 +9,16 @@ import com.example.livechat.data.UserData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class LCViewModel @Inject constructor(
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    private val storage: FirebaseStorage
 ) : ViewModel() {
 
 
@@ -32,13 +36,13 @@ class LCViewModel @Inject constructor(
 
     fun signUp(name: String, number: String, email: String, password: String) {
         inProgress.value = true
-        if (name.isEmpty() or number.isEmpty() or email.isEmpty() or password.isEmpty()){
+        if (name.isEmpty() or number.isEmpty() or email.isEmpty() or password.isEmpty()) {
             handleException(customMessage = "Please fill all fields")
             return
         }
         inProgress.value = false
-        db.collection(USER_NODE).whereEqualTo("number",number).get().addOnSuccessListener{
-            if (it.isEmpty){
+        db.collection(USER_NODE).whereEqualTo("number", number).get().addOnSuccessListener {
+            if (it.isEmpty) {
                 auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
                     inProgress.value = false
                     if (task.isSuccessful) {
@@ -49,33 +53,57 @@ class LCViewModel @Inject constructor(
                         handleException(task.exception, "signUp failed")
                     }
                 }
-            }else{
+            } else {
                 handleException(customMessage = "number Already Exists")
-                inProgress.value=false
+                inProgress.value = false
             }
         }
 
     }
 
-    fun Login(email: String,password: String){
-        if (email.isEmpty() or password.isEmpty()){
+    fun Login(email: String, password: String) {
+        if (email.isEmpty() or password.isEmpty()) {
             handleException(customMessage = "Please fill the all fields")
             return
-        }else{
-            inProgress.value=true
-            auth.signInWithEmailAndPassword(email,password)
-                .addOnCompleteListener{
-                    if (it.isSuccessful){
+        } else {
+            inProgress.value = true
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener {
+                    if (it.isSuccessful) {
                         signIn.value = true
-                        inProgress.value=false
+                        inProgress.value = false
                         auth.currentUser?.uid?.let {
                             getUserData(it)
                         }
-                    }else{
+                    } else {
                         handleException(customMessage = "Login Failed", exception = it.exception)
                     }
                 }
         }
+    }
+
+    fun uploadProfileImage(uri: Uri) {
+      uploadImage(uri) {
+          createOrUpdateProfile(imageUrl = it.toString())
+        }
+    }
+
+     fun uploadImage(uri: Uri, onSuccess: (Uri) -> Unit) {
+        inProgress.value = true
+        val storageRef = storage.reference
+        val uuid = UUID.randomUUID()
+
+        val imageRef = storageRef.child("image/$uuid")
+        val uploadTask =imageRef.putFile(uri)
+        uploadTask.addOnSuccessListener{
+val result = it.metadata?.reference?.downloadUrl
+            result?.addOnSuccessListener (onSuccess)
+                inProgress.value = false
+
+        }
+            .addOnFailureListener{
+                handleException()
+            }
     }
 
     private fun createOrUpdateProfile(
@@ -122,4 +150,6 @@ class LCViewModel @Inject constructor(
         val message = if (customMessage.isEmpty()) errorMsg else customMessage
         Log.e("TAG", message)
     }
+
+
 }

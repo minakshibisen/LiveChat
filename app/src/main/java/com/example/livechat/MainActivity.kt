@@ -17,7 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.example.livechat.screens.ChatListScreen
 import com.example.livechat.screens.LoginScreen
+import com.example.livechat.screens.ProfileScreen
 import com.example.livechat.screens.SignUpScreen
+import com.example.livechat.screens.StatusScreen
 import com.example.livechat.ui.theme.LiveChatTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -66,7 +68,13 @@ class MainActivity : ComponentActivity() {
                 LoginScreen(navController,vm)
             }
             composable(DestinationScreens.ChatList.route) {
-                ChatListScreen()
+                ChatListScreen(navController,vm)
+            }
+            composable(DestinationScreens.StatusList.route) {
+                StatusScreen(navController,vm)
+            }
+            composable(DestinationScreens.Profile.route) {
+                ProfileScreen(navController,vm)
             }
         }
 
