@@ -1,4 +1,4 @@
-package com.example.livechat
+package com.example.livechat.screens
 
 import androidx.compose.runtime.Composable
 

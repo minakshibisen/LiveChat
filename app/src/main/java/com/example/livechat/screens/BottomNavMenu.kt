@@ -19,11 +19,11 @@ import com.example.livechat.DestinationScreens
 import com.example.livechat.R
 import com.example.livechat.navigateTo
 
-
+// Corrected enum names for StatusList and ProfileList
 enum class BottomNavMenu(val icon: Int, val navDestination: DestinationScreens) {
     CHATLIST(R.drawable.ic_chat, DestinationScreens.ChatList),
-    STATUSlIST(R.drawable.status, DestinationScreens.StatusList),
-    PROFILElIST(R.drawable.baseline_person_24, DestinationScreens.Profile)
+    STATUSLIST(R.drawable.status, DestinationScreens.StatusList), // Fixed typo
+    PROFILELIST(R.drawable.baseline_person_24, DestinationScreens.Profile) // Fixed typo
 }
 
 @Composable
@@ -31,30 +31,31 @@ fun BottomNavMenu(
     selectedItem: BottomNavMenu,
     navController: NavController
 ) {
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(top = 4.dp)
-            .background(Color.White)
+            .background(Color.Red)
     ) {
-        for (item in BottomNavMenu.values()) {
-            Image(painter = painterResource(id = item.icon),
+        // Iterate over all enum values to create nav menu items
+        BottomNavMenu.entries.forEach { item ->
+            Image(
+                painter = painterResource(id = item.icon),
                 contentDescription = null,
                 modifier = Modifier
                     .size(40.dp)
                     .padding(4.dp)
-                    .weight(1f)
+                    .weight(1f) // Distribute space evenly
                     .clickable {
                         navigateTo(navController, item.navDestination.route)
                     },
+                // Apply color filter based on whether the item is selected or not
                 colorFilter = if (item == selectedItem)
-                ColorFilter.tint(color = Color.Black)
-                   else
-                    ColorFilter.tint(color = Color.Gray)
+                    ColorFilter.tint(color = Color.Black) // Highlight selected item
+                else
+                    ColorFilter.tint(color = Color.Gray) // Non-selected items
             )
-
         }
     }
 }
