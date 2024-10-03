@@ -1,13 +1,17 @@
 package com.example.livechat
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.example.livechat.screens.BottomNavMenu
 import com.example.livechat.screens.ChatListScreen
 import com.example.livechat.screens.LoginScreen
 import com.example.livechat.screens.ProfileScreen
@@ -55,31 +60,50 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
     @RequiresApi(Build.VERSION_CODES.S)
     @Composable
     fun ChatAppNavigation() {
         val navController = rememberNavController()
         val vm = hiltViewModel<LCViewModel>()
-        NavHost(navController = navController, startDestination = DestinationScreens.SignUp.route) {
-            composable(DestinationScreens.SignUp.route) {
-                SignUpScreen(vm = vm, navController = navController)
-            }
-            composable(DestinationScreens.Login.route) {
-                LoginScreen(navController,vm)
-            }
-            composable(DestinationScreens.ChatList.route) {
-                ChatListScreen(navController,vm)
-            }
-            composable(DestinationScreens.StatusList.route) {
-                StatusScreen(navController,vm)
-            }
-            composable(DestinationScreens.Profile.route) {
-                ProfileScreen(navController,vm)
-            }
+
+        // Determine which BottomNav item is selected based on the current route
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        val selectedItem = when (currentRoute) {
+            DestinationScreens.ChatList.route -> BottomNavMenu.CHATLIST
+            DestinationScreens.StatusList.route -> BottomNavMenu.STATUSLIST
+            DestinationScreens.Profile.route -> BottomNavMenu.PROFILELIST
+            else -> BottomNavMenu.CHATLIST // Default to ChatList
         }
 
-
+        Scaffold(
+            bottomBar = {
+                BottomNavMenu(selectedItem = selectedItem, navController = navController)
+            }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = DestinationScreens.ChatList.route,
+                modifier = Modifier.padding(innerPadding) // Adjust for bottom bar
+            ) {
+                composable(DestinationScreens.SignUp.route) {
+                    SignUpScreen(vm = vm, navController = navController)
+                }
+                composable(DestinationScreens.Login.route) {
+                    LoginScreen(navController, vm)
+                }
+                composable(DestinationScreens.ChatList.route) {
+                    ChatListScreen(navController, vm)
+                }
+                composable(DestinationScreens.StatusList.route) {
+                    StatusScreen(navController, vm)
+                }
+                composable(DestinationScreens.Profile.route) {
+                    ProfileScreen(navController, vm)
+                }
+            }
+        }
     }
+
+
 
 }

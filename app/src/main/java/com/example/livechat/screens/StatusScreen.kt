@@ -7,7 +7,6 @@ import com.example.livechat.LCViewModel
 
 @Composable
 fun StatusScreen (navController: NavController, vm : LCViewModel){
-    BottomNavMenu(selectedItem =BottomNavMenu.STATUSLIST , navController = navController)
 
     Text(text = "ss")
 }

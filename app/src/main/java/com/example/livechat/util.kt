@@ -21,6 +21,7 @@ import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 
 fun navigateTo(navController: NavController, route: String) {
@@ -65,7 +66,7 @@ fun CommonImage(
     modifier: Modifier = Modifier.wrapContentSize(),
     contentScale: ContentScale = ContentScale.Crop
 ) {
-    val painter = rememberImagePainter(data = data)
+    val painter = rememberAsyncImagePainter(model = data)
     Image(
         painter = painter,
         contentDescription = null,
