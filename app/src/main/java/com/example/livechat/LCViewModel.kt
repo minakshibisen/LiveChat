@@ -4,12 +4,18 @@ import android.app.usage.UsageEvents.Event
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
+import com.example.livechat.data.CHATS_NODE
+import com.example.livechat.data.ChatData
+import com.example.livechat.data.ChatUser
 import com.example.livechat.data.USER_NODE
 import com.example.livechat.data.UserData
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
@@ -24,9 +30,11 @@ class LCViewModel @Inject constructor(
 
 
     var inProgress = mutableStateOf(false)
+    var inProcessChats = mutableStateOf(false)
     var signIn = mutableStateOf(false)
-    var userData = mutableStateOf<UserData?>(null)
+    val userData = mutableStateOf<UserData?>(null)
     var eventMutableState = mutableStateOf("")
+    val chats = mutableStateOf<List<ChatData?>>(listOf())
 
     init {
         val currentUser = auth.currentUser
@@ -36,6 +44,28 @@ class LCViewModel @Inject constructor(
         }
     }
 
+    fun populateChats() {
+        inProgress.value = true
+        db.collection(CHATS_NODE).where(
+            Filter.or(
+                Filter.equalTo("user1.userId",userData.value?.userId),
+                Filter.equalTo("user2.userId",userData.value?.userId)
+
+        )
+        ).addSnapshotListener{
+            value , error->
+            if (error!=null){
+                handleException(error)
+
+        }
+            if (value!=null){
+                chats.value=value.documents.mapNotNull {
+                    it.toObject<ChatData>()
+                }
+                inProgress.value=false
+            }
+        }
+    }
 
     fun signUp(name: String, number: String, email: String, password: String) {
         inProgress.value = true
@@ -147,6 +177,7 @@ class LCViewModel @Inject constructor(
             documentSnapshot?.toObject<UserData>()?.let { user ->
                 userData.value = user
             }
+            populateChats()
         }
     }
 
@@ -163,6 +194,61 @@ class LCViewModel @Inject constructor(
         userData.value = null
         eventMutableState.value = "logged out"
 
+    }
+
+    fun onAddChat(number: String) {
+        if (number.isEmpty() or !number.isDigitsOnly()) {
+            handleException(customMessage = "Number must be contain digits only")
+        } else {
+            db.collection(CHATS_NODE).where(
+                Filter.or(
+                    Filter.and(
+                        Filter.equalTo("user1 number", number),
+                        Filter.equalTo("User2. number", userData.value?.number)
+
+                    ), Filter.and(
+                        Filter.equalTo("User2. number", userData.value?.number),
+                        Filter.equalTo("user1 number", number),
+
+                        )
+
+                )
+            ).get().addOnSuccessListener {
+                if (it.isEmpty) {
+                    db.collection(USER_NODE).whereEqualTo("number", number).get()
+                        .addOnSuccessListener {
+                            if (it.isEmpty) {
+                                handleException(customMessage = "number not found")
+                            } else {
+                                val chatPartner = it.toObjects<UserData>()[0]
+                                val id = db.collection(CHATS_NODE).document().id
+                                val chat = ChatData(
+                                    chatId = id,
+                                    user1 = ChatUser(
+                                        userData.value?.userId,
+                                        userData.value?.name,
+                                        userData.value?.imageUrl,
+                                        userData.value?.number
+                                    ),
+                                    user2 = ChatUser(
+                                        chatPartner.userId,
+                                        chatPartner.name,
+                                        chatPartner.imageUrl,
+                                        chatPartner.number
+                                    )
+                                )
+
+                                db.collection(CHATS_NODE).document(id).set(chat)
+                            }
+                        }
+                        .addOnFailureListener {
+                            handleException(it)
+                        }
+                } else {
+                    handleException(customMessage = "chat already exist")
+                }
+            }
+        }
     }
 
 
