@@ -28,5 +28,4 @@ fun ChatListScreen(navController: NavController,vm :LCViewModel) {
 
 @Composable
 fun ChatScreenContent() {
-    TODO("Not yet implemented")
 }

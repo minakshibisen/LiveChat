@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +24,14 @@ import com.example.livechat.CommonImage
 import com.example.livechat.CommonProgressBar
 import com.example.livechat.LCViewModel
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import com.example.livechat.DestinationScreens
+import com.example.livechat.navigateTo
 
 @Composable
 fun ProfileScreen(navController: NavController, vm: LCViewModel) {
@@ -30,6 +39,13 @@ fun ProfileScreen(navController: NavController, vm: LCViewModel) {
     if (inProgress) {
         CommonProgressBar()
     } else {
+        val userData = vm.userData.value
+        var name by rememberSaveable {
+            mutableStateOf(userData?.name ?: "")
+        }
+        var number by rememberSaveable {
+            mutableStateOf(userData?.number ?: "")
+        }
         Column(
             modifier = Modifier
                 .fillMaxHeight()
@@ -41,19 +57,35 @@ fun ProfileScreen(navController: NavController, vm: LCViewModel) {
                     .padding(8.dp)
                     .background(color = Color.White),
                 vm = vm,
-                name = vm.userData.value?.name ?: "", // Placeholder for user's name
-                number = vm.userData.value?.number ?: "", // Placeholder for user's number
-                onNameChange = { },
-                onNumberChange = {},
-                onBack = { navController.popBackStack() }, // Navigate back
-                onSave = {  }, // Handle profile save
-                onLogout = {  } // Handle logout action
+                name = name, // Placeholder for user's name
+                number = number, // Placeholder for user's number
+                onNameChange = { name = it },
+                onNumberChange = { number = it },
+                onBack = {
+                    navigateTo(
+                        navController = navController,
+                        route = DestinationScreens.ChatList.route
+                    )
+                }, // Navigate back
+                onSave = {
+                    vm.createOrUpdateProfile(
+                        name = name,
+                        number = number
+                    )
+                }, // Handle profile save
+                onLogout = {
+                    vm.logout()
+                    navigateTo(
+                        navController = navController,
+                        route = DestinationScreens.Login.route
+                    )
+                } // Handle logout action
             )
             // Bottom Navigation Menu at the bottom
-           /* BottomNavMenu(
-                selectedItem = BottomNavMenu.PROFILELIST,
-                navController = navController
-            )*/
+            /* BottomNavMenu(
+                 selectedItem = BottomNavMenu.PROFILELIST,
+                 navController = navController
+             )*/
         }
     }
 }
@@ -88,7 +120,6 @@ fun ProfileContent(
 
         CommonDivider()
 
-        // Name Input Field
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,6 +129,10 @@ fun ProfileContent(
             TextField(
                 value = name,
                 onValueChange = onNameChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusable(true),
+                singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = Color.Black,
                     focusedContainerColor = Color.Transparent,
@@ -117,6 +152,11 @@ fun ProfileContent(
             TextField(
                 value = number,
                 onValueChange = onNumberChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusable(true),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = Color.Black,
                     focusedContainerColor = Color.Transparent,
@@ -162,13 +202,18 @@ fun ProfileImage(imageUrl: String?, vm: LCViewModel) {
                 .padding(8.dp)
                 .size(100.dp)
         ) {
-            if (imageUrl != null) {
-                CommonImage(data = imageUrl)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (imageUrl != null) {
+                    CommonImage(data = imageUrl)
+                }
+
             }
-            Text(text = "Change profile picture")
-        }
-        if (vm.inProgress.value) {
-            CommonProgressBar()
+            if (vm.inProgress.value) {
+                CommonProgressBar()
+            }
         }
     }
 }
