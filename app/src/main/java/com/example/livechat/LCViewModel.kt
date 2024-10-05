@@ -10,6 +10,8 @@ import com.example.livechat.data.ChatData
 import com.example.livechat.data.ChatUser
 import com.example.livechat.data.MESSAGE_NODE
 import com.example.livechat.data.Message
+import com.example.livechat.data.STATUS_NODE
+import com.example.livechat.data.Status
 import com.example.livechat.data.USER_NODE
 import com.example.livechat.data.UserData
 import com.google.firebase.auth.FirebaseAuth
@@ -38,9 +40,14 @@ class LCViewModel @Inject constructor(
     val userData = mutableStateOf<UserData?>(null)
     var eventMutableState = mutableStateOf("")
     val chats = mutableStateOf<List<ChatData?>>(listOf())
-val chatMessage= mutableStateOf<List<Message>>(listOf())
+    val chatMessage = mutableStateOf<List<Message>>(listOf())
     var inProgressChatMessage = mutableStateOf(false)
-    var currentChatMessageListener:ListenerRegistration?=null
+    var currentChatMessageListener: ListenerRegistration? = null
+
+    val status = mutableStateOf<List<Status>>(listOf())
+
+    val inProgressStatus = mutableStateOf(false)
+
     init {
         val currentUser = auth.currentUser
         signIn.value = currentUser != null
@@ -49,58 +56,57 @@ val chatMessage= mutableStateOf<List<Message>>(listOf())
         }
     }
 
-    fun populateMessages(chatId: String){
+    fun populateMessages(chatId: String) {
         inProgressChatMessage.value = true
         currentChatMessageListener = db.collection(CHATS_NODE).document(chatId).collection(
-            MESSAGE_NODE).addSnapshotListener{
-                value,error->
-                if (error!=null){
-                    handleException(error)
+            MESSAGE_NODE
+        ).addSnapshotListener { value, error ->
+            if (error != null) {
+                handleException(error)
 
-                }
-            if (value!=null){
-                chatMessage.value=value.documents.mapNotNull {
+            }
+            if (value != null) {
+                chatMessage.value = value.documents.mapNotNull {
                     it.toObject<Message>()
                 }
-                    . sortedBy{
+                    .sortedBy {
                         it.timestamp
                     }
-                inProgressChatMessage.value=false
+                inProgressChatMessage.value = false
             }
         }
     }
 
-    fun depopulateMessage(){
-        chatMessage.value= listOf()
-        currentChatMessageListener=null
+    fun depopulateMessage() {
+        chatMessage.value = listOf()
+        currentChatMessageListener = null
     }
 
     fun populateChats() {
         inProgress.value = true
         db.collection(CHATS_NODE).where(
             Filter.or(
-                Filter.equalTo("user1.userId",userData.value?.userId),
-                Filter.equalTo("user2.userId",userData.value?.userId)
+                Filter.equalTo("user1.userId", userData.value?.userId),
+                Filter.equalTo("user2.userId", userData.value?.userId)
 
-        )
-        ).addSnapshotListener{
-            value , error->
-            if (error!=null){
+            )
+        ).addSnapshotListener { value, error ->
+            if (error != null) {
                 handleException(error)
 
-        }
-            if (value!=null){
-                chats.value=value.documents.mapNotNull {
+            }
+            if (value != null) {
+                chats.value = value.documents.mapNotNull {
                     it.toObject<ChatData>()
                 }
-                inProgress.value=false
+                inProgress.value = false
             }
         }
     }
 
-    fun onSendReply(chatId:String,message:String){
+    fun onSendReply(chatId: String, message: String) {
         val time = Calendar.getInstance().time.toString()
-        val msg= Message(userData.value?.userId,message,time)
+        val msg = Message(userData.value?.userId, message, time)
         db.collection(CHATS_NODE).document(chatId).collection(MESSAGE_NODE).document().set(msg)
     }
 
@@ -215,6 +221,7 @@ val chatMessage= mutableStateOf<List<Message>>(listOf())
                 userData.value = user
             }
             populateChats()
+            populateStatuses()
         }
     }
 
@@ -229,6 +236,8 @@ val chatMessage= mutableStateOf<List<Message>>(listOf())
         auth.signOut()
         signIn.value = false
         userData.value = null
+        depopulateMessage()
+        currentChatMessageListener = null
         eventMutableState.value = "logged out"
 
     }
@@ -288,5 +297,60 @@ val chatMessage= mutableStateOf<List<Message>>(listOf())
         }
     }
 
+    fun uploadStatus(uri: Uri) {
+        uploadImage(uri) {
+            createStatus(it.toString())
+        }
+    }
 
+    fun createStatus(imageUrl: String?) {
+        val newStatus = Status(
+            ChatUser(
+                userData.value?.userId,
+                userData.value?.name,
+                userData.value?.imageUrl,
+                userData.value?.number,
+
+                ),
+            imageUrl,
+            System.currentTimeMillis()
+        )
+        db.collection(STATUS_NODE).document().set(newStatus)
+    }
+
+    fun populateStatuses() {
+        val timeDelta = 24L*60 *60 *1000
+        val cutOff = System.currentTimeMillis()-timeDelta
+        inProgressStatus.value = true
+        db.collection(CHATS_NODE).where(
+            Filter.or(
+                Filter.equalTo("user1.userId", userData.value?.userId),
+                Filter.equalTo("user2.userId", userData.value?.userId)
+            )
+        ).addSnapshotListener { value, error ->
+            if (error != null)
+                handleException(error)
+            if (value != null) {
+                val currentCollection = arrayListOf(userData.value?.userId)
+                val chats = value.toObjects<ChatData>()
+                chats.forEach { chat ->
+                    if (chat.user1.userId == userData.value?.userId) {
+                        currentCollection.add(chat.user2.userId)
+                    } else
+                        currentCollection.add(chat.user1.userId)
+                }
+                db.collection(STATUS_NODE).whereGreaterThan("timestamp",cutOff).whereIn("user.userId", currentCollection)
+                    .addSnapshotListener { value, error ->
+
+                        if (error != null) {
+                            handleException(error)
+                        }
+                        if (value != null) {
+                            status.value = value.toObjects()
+                            inProgressStatus.value = false
+                        }
+                    }
+            }
+        }
+    }
 }

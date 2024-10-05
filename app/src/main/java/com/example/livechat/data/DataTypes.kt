@@ -32,3 +32,9 @@ data class Message(
     var message :String? ="",
     var timestamp :String? =""
 )
+data class Status(val user:ChatUser= ChatUser(),
+                  val imageUrl:String?="",
+    val timestamp:Long?=null
+
+)
+
