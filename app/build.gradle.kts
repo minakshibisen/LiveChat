@@ -97,4 +97,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:$nav_version")
     implementation("androidx.compose.material:material:1.7.2")
 
+    implementation ("com.google.android.gms:play-services-auth:19.2.0") // Or your required service
+
+
 }

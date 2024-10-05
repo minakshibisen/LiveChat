@@ -25,6 +25,7 @@ import com.example.livechat.screens.ChatListScreen
 import com.example.livechat.screens.LoginScreen
 import com.example.livechat.screens.ProfileScreen
 import com.example.livechat.screens.SignUpScreen
+import com.example.livechat.screens.SingleChatScreen
 import com.example.livechat.screens.StatusScreen
 import com.example.livechat.ui.theme.LiveChatTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,7 +36,7 @@ sealed class DestinationScreens(var route: String) {
     object Profile : DestinationScreens("profile")
     object ChatList : DestinationScreens("chatList")
     object SingleChat : DestinationScreens("singleChat/{chatId}") {
-        fun createRoute(id: String) = "single chat/$id"
+        fun createRoute(id: String) = "singleChat/$id"
     }
 
     object StatusList : DestinationScreens("StatusList")
@@ -93,6 +94,10 @@ class MainActivity : ComponentActivity() {
                 }
                 composable(DestinationScreens.ChatList.route) {
                     ChatListScreen(navController, vm)
+                }
+                composable(DestinationScreens.SingleChat.route) {
+                   val chatId = it.arguments?.getString("chatId")
+                    chatId?.let { SingleChatScreen(navController = navController,vm=vm,chatId=chatId) }
                 }
                 composable(DestinationScreens.StatusList.route) {
                     StatusScreen(navController, vm)

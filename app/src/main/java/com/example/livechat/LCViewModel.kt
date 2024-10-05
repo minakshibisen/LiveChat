@@ -1,6 +1,5 @@
 package com.example.livechat
 
-import android.app.usage.UsageEvents.Event
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
@@ -9,15 +8,19 @@ import androidx.lifecycle.ViewModel
 import com.example.livechat.data.CHATS_NODE
 import com.example.livechat.data.ChatData
 import com.example.livechat.data.ChatUser
+import com.example.livechat.data.MESSAGE_NODE
+import com.example.livechat.data.Message
 import com.example.livechat.data.USER_NODE
 import com.example.livechat.data.UserData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
 
@@ -35,13 +38,41 @@ class LCViewModel @Inject constructor(
     val userData = mutableStateOf<UserData?>(null)
     var eventMutableState = mutableStateOf("")
     val chats = mutableStateOf<List<ChatData?>>(listOf())
-
+val chatMessage= mutableStateOf<List<Message>>(listOf())
+    var inProgressChatMessage = mutableStateOf(false)
+    var currentChatMessageListener:ListenerRegistration?=null
     init {
         val currentUser = auth.currentUser
         signIn.value = currentUser != null
         currentUser?.uid?.let {
             getUserData(it)
         }
+    }
+
+    fun populateMessages(chatId: String){
+        inProgressChatMessage.value = true
+        currentChatMessageListener = db.collection(CHATS_NODE).document(chatId).collection(
+            MESSAGE_NODE).addSnapshotListener{
+                value,error->
+                if (error!=null){
+                    handleException(error)
+
+                }
+            if (value!=null){
+                chatMessage.value=value.documents.mapNotNull {
+                    it.toObject<Message>()
+                }
+                    . sortedBy{
+                        it.timestamp
+                    }
+                inProgressChatMessage.value=false
+            }
+        }
+    }
+
+    fun depopulateMessage(){
+        chatMessage.value= listOf()
+        currentChatMessageListener=null
     }
 
     fun populateChats() {
@@ -65,6 +96,12 @@ class LCViewModel @Inject constructor(
                 inProgress.value=false
             }
         }
+    }
+
+    fun onSendReply(chatId:String,message:String){
+        val time = Calendar.getInstance().time.toString()
+        val msg= Message(userData.value?.userId,message,time)
+        db.collection(CHATS_NODE).document(chatId).collection(MESSAGE_NODE).document().set(msg)
     }
 
     fun signUp(name: String, number: String, email: String, password: String) {
