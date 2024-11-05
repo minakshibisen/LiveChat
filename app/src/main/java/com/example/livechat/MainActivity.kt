@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @RequiresApi(Build.VERSION_CODES.S)
     @Composable
     fun ChatAppNavigation() {
@@ -97,16 +98,22 @@ class MainActivity : ComponentActivity() {
                     ChatListScreen(navController, vm)
                 }
                 composable(DestinationScreens.SingleChat.route) {
-                   val chatId = it.arguments?.getString("chatId")
-                    chatId?.let { SingleChatScreen(navController = navController,vm=vm,chatId=chatId) }
+                    val chatId = it.arguments?.getString("chatId")
+                    chatId?.let {
+                        SingleChatScreen(
+                            navController = navController,
+                            vm = vm,
+                            chatId = chatId
+                        )
+                    }
                 }
                 composable(DestinationScreens.StatusList.route) {
                     StatusScreen(navController, vm)
                 }
                 composable(DestinationScreens.SingleStatus.route) {
                     val userId = it.arguments?.getString("userId")
-                    userId?.let{
-                        SingleStatusScreen(navController=navController,vm=vm, userId = it)
+                    userId?.let {
+                        SingleStatusScreen(navController = navController, vm = vm, userId = it)
 
                     }
                 }
@@ -115,8 +122,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
 
-
-
+}
 }

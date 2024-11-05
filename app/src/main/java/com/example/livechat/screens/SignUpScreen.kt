@@ -92,8 +92,6 @@ CheckSignedIn(vm = vm, navController = navController)
                 modifier = Modifier.padding(8.dp)
 
             )
-
-
             OutlinedTextField(
                 value = numberState.value,
                 onValueChange = {

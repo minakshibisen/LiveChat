@@ -319,8 +319,8 @@ class LCViewModel @Inject constructor(
     }
 
     fun populateStatuses() {
-        val timeDelta = 24L*60 *60 *1000
-        val cutOff = System.currentTimeMillis()-timeDelta
+        val timeDelta = 24L * 60 * 60 * 1000
+        val cutOff = System.currentTimeMillis() - timeDelta
         inProgressStatus.value = true
         db.collection(CHATS_NODE).where(
             Filter.or(
@@ -339,7 +339,8 @@ class LCViewModel @Inject constructor(
                     } else
                         currentCollection.add(chat.user1.userId)
                 }
-                db.collection(STATUS_NODE).whereGreaterThan("timestamp",cutOff).whereIn("user.userId", currentCollection)
+                db.collection(STATUS_NODE).whereGreaterThan("timestamp", cutOff)
+                    .whereIn("user.userId", currentCollection)
                     .addSnapshotListener { value, error ->
 
                         if (error != null) {
